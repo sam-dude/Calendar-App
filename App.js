@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -13,6 +13,9 @@ import InviteUser from './screens/InviteUser';
 import Dashboard from './screens/Dashboard';
 import Sync from './screens/Sync';
 import Profile from './screens/Profile';
+import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
+import { AuthContext, AuthProvider } from './context/AuthContext';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -29,6 +32,28 @@ const DashboardStack = () => (
     />
   </Stack.Navigator>
 );
+
+const AuthStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="Login"
+      component={LoginScreen}
+      options={{
+        headerTitle: '',
+        headerStyle: {backgroundColor: '#FBFBFB', height: 0},
+      }}
+    />
+    <Stack.Screen
+      name="Register"
+      component={RegisterScreen}
+      options={{
+        headerTitle: '',
+        headerStyle: {backgroundColor: '#FBFBFB', height: 0},
+      }}
+    />
+  </Stack.Navigator>
+);
+
 
 const SyncStack = () => (
   <Stack.Navigator>
@@ -130,8 +155,23 @@ const TabNavigator = () => {
   );
 };
 
-export default function App() {
-  return (
+const InApp = () => {
+  const {user} = useContext(AuthContext);
+
+  if (user === null) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen
+            name="Auth"
+            component={AuthStack}
+            options={{headerShown: false}}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+  return(
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Main">
         <Stack.Screen
@@ -157,5 +197,18 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
+  )
+}
+
+const AppWrapper = () => {
+  return(
+    <AuthProvider>
+      <InApp />
+    </AuthProvider>
+  )
+}
+export default function App() {
+  return (
+    <AppWrapper />
   );
 }
