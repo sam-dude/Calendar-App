@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useEffect, useState } from "react";
 
 const AuthContext = createContext();
@@ -17,7 +18,7 @@ function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  const handleLogin = async (user) => {
+  const handleContextLogin = async (user) => {
     setUser(user);
     await AsyncStorage.setItem('user', JSON.stringify(user));
   };
@@ -29,7 +30,7 @@ function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider 
-        value={{ user, setUser, handleLogin, handleLogout}}
+        value={{ user, setUser, handleContextLogin, handleLogout}}
     >
       {children}
     </AuthContext.Provider>

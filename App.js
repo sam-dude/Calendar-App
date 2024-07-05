@@ -175,6 +175,11 @@ const InApp = () => {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Main">
         <Stack.Screen
+          name="Main"
+          component={TabNavigator}
+          options={{headerShown: false}} // Hide header for tab navigator
+        />
+        <Stack.Screen
           name="Add an Event"
           component={Calendar}
           options={{
@@ -189,11 +194,6 @@ const InApp = () => {
             headerLeft: () => <HeaderLeftButton />,
             headerStyle: {backgroundColor: '#FBFBFB'},
           }}
-        />
-        <Stack.Screen
-          name="Main"
-          component={TabNavigator}
-          options={{headerShown: false}} // Hide header for tab navigator
         />
       </Stack.Navigator>
     </NavigationContainer>
