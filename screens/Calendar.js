@@ -64,14 +64,21 @@ const Calendar = ({navigation}) => {
         marked: true,
         eventTitle: event.title, // Assuming 'event' field is used as 'eventTitle'
         eventDescription: `Go to ${event.event}`, // Example of deriving 'eventDescription'
-        selectedColor: colors[0], // Assuming 'colors' array is defined elsewhere
+        selectedColor: event.color, // Assuming 'colors' array is defined elsewhere
       };
     });
     // console.log("Transfromed ", transformed);
     return transformed;
   };
   
-  const {user, events} = useContext(AuthContext)
+  const {
+    user, 
+    events,
+    addEventToDeviceCalendar, 
+    editEventInDeviceCalendar, 
+    deleteEventFromDeviceCalendar, 
+    addBulkEventsToDeviceCalendar,
+  } = useContext(AuthContext)
   const [eventLists, setEvents] = useState(transformEvents(events));
 
   // const [eventLists, setEvents] = useState({
@@ -249,7 +256,16 @@ const Calendar = ({navigation}) => {
       event: title,
     };
 
+    const event = {
+      title,
+      description: text,
+      startDate: selectedDate.toISOString(),
+      endDate: selectedDate.toISOString(),
+      calendar: selectedCalendar.name,
+    }
+
     const response = await CreateEvent(user.token, eventObjToServer);
+    await addEventToDeviceCalendar(event)
     console.log(response);
     setAddingEvent(false);
     navigation.goBack()

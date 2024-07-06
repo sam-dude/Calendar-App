@@ -228,7 +228,7 @@ const Dashboard = () => {
               <Contact
                 key={index}
                 event={item.event}
-                backColor={item.backColor}
+                backColor={item.color}
                 iconUrl={item.iconUrl}
                 date={item.startTime}
                 avatarUrl={item.avatarUrl}
