@@ -1,5 +1,5 @@
 import {he} from 'date-fns/locale';
-import React, {useState} from 'react';
+import React, {useContext, useEffect, useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import Contact from '../components/Contact';
 import {ScrollView} from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { AuthContext } from '../context/AuthContext';
+import { FetchEventsApi } from '../utils/api';
 
 const Data = [
   {
@@ -56,6 +58,7 @@ const Data = [
 const Dashboard = () => {
   const navigation = useNavigation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isFetching, setIsFetching] = useState(false)
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -114,6 +117,24 @@ const Dashboard = () => {
     'December',
   ];
 
+  const {user, events, saveEvents} = useContext(AuthContext);
+
+  const fetchEvents = async () => {
+    setIsFetching(true)
+    const response = await FetchEventsApi(user.token)
+    if(response) {
+      saveEvents(response)
+    }
+    
+    setIsFetching(false)
+    console.log("Events", response)
+  }
+  useLayoutEffect(() => {
+    console.log('fetching events')
+    fetchEvents()
+  }
+  , [])
+
   return (
     <View style={styles.container}>
       <View style={styles.section}>
@@ -124,7 +145,7 @@ const Dashboard = () => {
           />
           <View style={styles.avatarText}>
             <Text style={styles.sm}>Welcome</Text>
-            <Text style={styles.md}>Emily Gibbs</Text>
+            <Text style={styles.md}>{user.username}</Text>
           </View>
         </View>
         <View>
@@ -198,33 +219,40 @@ const Dashboard = () => {
       </View>
       <ScrollView style={styles.contactView}>
         <Text style={styles.text}>Events</Text>
-        <View>
-          <Text style={styles.evenTitle}>This Week</Text>
-          {Data.slice(0, 3).map((item, index) => (
-            <Contact
-              key={index}
-              event={item.event}
-              backColor={item.backColor}
-              iconUrl={item.iconUrl}
-              date={item.date}
-              avatarUrl={item.avatarUrl}
-            />
-          ))}
-        </View>
-        <View>
-          <Text style={styles.evenTitle}>Next Week</Text>
+        {
+          events.length === 0 && isFetching ? <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}><Text style={{color: "#222"}}>Loading...</Text></View> : 
+          <>
+          <View>
+            <Text style={styles.evenTitle}>This Week</Text>
+            {events?.sort((a, b) => new Date(a.startTime) - new Date(b.startTime)).map((item, index) => (
+              <Contact
+                key={index}
+                event={item.event}
+                backColor={item.backColor}
+                iconUrl={item.iconUrl}
+                date={item.startTime}
+                avatarUrl={item.avatarUrl}
+                item={item}
+              />
+            ))}
+          </View>
+          <View>
+            <Text style={styles.evenTitle}>Next Week</Text>
 
-          {Data.slice(3, 5).map((item, index) => (
-            <Contact
-              key={index}
-              event={item.event}
-              backColor={item.backColor}
-              iconUrl={item.iconUrl}
-              date={item.date}
-              avatarUrl={item.avatarUrl}
-            />
-          ))}
-        </View>
+            {Data.slice(3, 5).map((item, index) => (
+              <Contact
+                key={index}
+                event={item.event}
+                backColor={item.backColor}
+                iconUrl={item.iconUrl}
+                date={item.date}
+                avatarUrl={item.avatarUrl}
+                item={item}
+              />
+            ))}
+          </View>
+          </>
+        }
       </ScrollView>
       <View style={styles.addIcon}>
         <TouchableOpacity
@@ -365,6 +393,7 @@ const styles = StyleSheet.create({
   },
   arrowIcon: {
     fontSize: 24,
+    color: '#222',
   },
 
   calendar: {

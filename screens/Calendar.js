@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {
   StyleSheet,
   View,
@@ -14,10 +14,13 @@ import {CalendarProvider, CalendarContext} from 'react-native-calendars';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Modal from 'react-native-modal';
-import {listGoogleEvent} from '../utils/api.js';
+import { AuthContext } from '../context/AuthContext.js';
+import { CreateEvent } from '../utils/api.js';
+import { Data } from '../utils/faker.js';
+// import {listGoogleEvent} from '../utils/api.js';
 // import axios from 'axios';
 
-const Calendar = () => {
+const Calendar = ({navigation}) => {
   const [text, setText] = useState('');
   const [title, setTitle] = useState('');
   const [text2, setText2] = useState('');
@@ -51,84 +54,73 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState('2024-06-15');
   const [editableFlag, setEditableFlag] = useState(true);
   const [selectedCalendar, setSelectedCalendar] = useState(calendars[0]);
+  const transformEvents = (eventsArray) => {
+    const transformed = {};
+  
+    eventsArray.forEach(event => {
+      const dateKey = event.startTime.split('T')[0]; // Extract date in 'YYYY-MM-DD' format
+      transformed[dateKey] = {
+        selected: true,
+        marked: true,
+        eventTitle: event.title, // Assuming 'event' field is used as 'eventTitle'
+        eventDescription: `Go to ${event.event}`, // Example of deriving 'eventDescription'
+        selectedColor: colors[0], // Assuming 'colors' array is defined elsewhere
+      };
+    });
+    // console.log("Transfromed ", transformed);
+    return transformed;
+  };
+  
+  const {user, events} = useContext(AuthContext)
+  const [eventLists, setEvents] = useState(transformEvents(events));
 
-  const [events, setEvents] = useState({
-    '2024-06-15': {
-      selected: true,
-      marked: true,
-      eventTitle: 'Birthday Party',
-      eventDescription: 'Go to BirthDay Party',
-      selectedColor: colors[0],
-    },
-    '2024-06-29': {
-      selected: true,
-      marked: true,
-      eventTitle: 'Sport meeting',
-      eventDescription: 'Basket ball tournament',
-      selectedColor: colors[1],
-    },
-    '2024-06-06': {
-      selected: true,
-      marked: true,
-      selectedColor: colors[2],
-      eventTitle: 'Physic test',
-      eventDescription: 'Lesson 3',
-    },
-    '2024-06-10': {
-      selected: true,
-      marked: true,
-      selectedColor: colors[3],
-      eventTitle: 'Music',
-      eventDescription: 'Go to the Music Hall',
-    },
-    '2024-06-20': {
-      selected: true,
-      marked: true,
-      selectedColor: colors[4],
-      eventTitle: 'Family Party',
-      eventDescription: 'Grandma birthday',
-    },
-    // Add more event days as needed
-  });
+  // const [eventLists, setEvents] = useState({
+  //   '2024-06-15': {
+  //     selected: true,
+  //     marked: true,
+  //     eventTitle: 'Birthday Party',
+  //     eventDescription: 'Go to BirthDay Party',
+  //     selectedColor: colors[0],
+  //   },
+  //   '2024-06-29': {
+  //     selected: true,
+  //     marked: true,
+  //     eventTitle: 'Sport meeting',
+  //     eventDescription: 'Basket ball tournament',
+  //     selectedColor: colors[1],
+  //   },
+  //   '2024-06-06': {
+  //     selected: true,
+  //     marked: true,
+  //     selectedColor: colors[2],
+  //     eventTitle: 'Physic test',
+  //     eventDescription: 'Lesson 3',
+  //   },
+  //   '2024-06-10': {
+  //     selected: true,
+  //     marked: true,
+  //     selectedColor: colors[3],
+  //     eventTitle: 'Music',
+  //     eventDescription: 'Go to the Music Hall',
+  //   },
+  //   '2024-06-20': {
+  //     selected: true,
+  //     marked: true,
+  //     selectedColor: colors[4],
+  //     eventTitle: 'Family Party',
+  //     eventDescription: 'Grandma birthday',
+  //   },
+  //   // Add more event days as needed
+  // });
   const [isVisible, setIsVisible] = useState(false);
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(null);
-  const Data = [
-    {
-      name: 'MarvinMcKinney',
-      iconUrl: require('../assets/images/friends/MarvinMcKinney.png'),
-    },
-    {
-      name: 'TheresaWebb',
-      iconUrl: require('../assets/images/friends/TheresaWebb.png'),
-    },
-    {
-      name: 'RobertFox',
-      iconUrl: require('../assets/images/friends/RobertFox.png'),
-    },
-    {
-      name: 'SavannaNguyen',
-      iconUrl: require('../assets/images/friends/SavannaNguyen.png'),
-    },
-    {
-      name: 'CourtneyHenry',
-      iconUrl: require('../assets/images/friends/CourtneyHenry.png'),
-    },
-    {
-      name: 'ArleneMcCoy',
-      iconUrl: require('../assets/images/friends/ArleneMcCoy.png'),
-    },
-    {
-      name: 'DarleneRobertson',
-      iconUrl: require('../assets/images/friends/DarleneRobertson.png'),
-    },
-    {
-      name: 'CameronWilliamson',
-      iconUrl: require('../assets/images/friends/CameronWilliamson.png'),
-    },
-  ];
   const [selectedFriend, setSelectedFriend] = useState(Data[0]);
-  const getDateString = date => {
+  const getDateString = dateInput => {
+    // Ensure the input is a Date object
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  
+    console.log(date);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
       2,
       '0',
@@ -136,10 +128,10 @@ const Calendar = () => {
   };
   const customDatesStyles = [];
 
-  for (const dateString in events) {
+  for (const dateString in eventLists) {
     const date = new Date(dateString);
     date.setDate(date.getDate() + 1);
-    const eventData = events[dateString];
+    const eventData = eventLists[dateString];
 
     customDatesStyles.push({
       date: date,
@@ -160,16 +152,16 @@ const Calendar = () => {
       date.getMonth() + 1,
     ).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     setSelectedDate(date);
-    if (events[dateString]) {
+    if (eventLists[dateString]) {
       setEventDetails({
-        ...events[dateString],
-        selectedColor: events[dateString].selectedColor || '#2196f3', // Use the event's selectedColor or default to blue
+        ...eventLists[dateString],
+        selectedColor: eventLists[dateString].selectedColor || '#2196f3', // Use the event's selectedColor or default to blue
       });
       setEditableFlag(false);
-      setTitle(events[dateString].eventTitle);
-      setText(events[dateString].eventDescription);
-      setTitle2(events[dateString].eventTitle);
-      setText2(events[dateString].eventDescription);
+      setTitle(eventLists[dateString].eventTitle);
+      setText(eventLists[dateString].eventDescription);
+      setTitle2(eventLists[dateString].eventTitle);
+      setText2(eventLists[dateString].eventDescription);
       setIsVisible(true);
     } else {
       setTitle('');
@@ -228,8 +220,11 @@ const Calendar = () => {
     setSelectedColor(color);
   };
 
-  const addEvent = () => {
-    const newEvents = {...events};
+  const [addingEvent, setAddingEvent] = useState(false);
+  const addEvent = async () => {
+    setAddingEvent(true);
+    console.log("selectedDate");
+    const newEvents = {...eventLists};
     const date = getDateString(selectedDate);
     newEvents[date] = {
       selected: true,
@@ -238,11 +233,30 @@ const Calendar = () => {
       eventDescription: text,
       selectedColor: selectedColor,
     };
+    // console.log(newEvents);
     setEvents(newEvents);
+    const eventObjToServer = {
+      user: selectedFriend.name,
+      eventTitle: title,
+      eventDescription: text,
+      color: selectedColor,
+      duration: selectedOption,
+      startTime: selectedDate,
+      endTime: selectedDate,
+      creationTime: new Date(),
+      creationUser: user.username,
+      tag: selectedFriend.name,
+      event: title,
+    };
+
+    const response = await CreateEvent(user.token, eventObjToServer);
+    console.log(response);
+    setAddingEvent(false);
+    navigation.goBack()
   };
   const handleEventDelete = date => {
     setEvents(prevEvents => {
-      // Make a copy of the existing events
+      // Make a copy of the existing eventLists
       const newEvents = {...prevEvents};
 
       // Delete the event object with the specified date
@@ -271,7 +285,7 @@ const Calendar = () => {
 
   const handleEventUpdate = (date, event) => {
     setEvents(prevEvents => {
-      // Make a copy of the existing events
+      // Make a copy of the existing eventLists
       const newEvents = {...prevEvents};
       console.log(event);
       if (newEvents[date]) {
@@ -302,11 +316,11 @@ const Calendar = () => {
   };
   // const handleListEvents = async (month, year) => {
   //   try {
-  //     const events = await listGoogleEvent(month, year);
-  //     // Handle the fetched events, e.g., update the UI
-  //     console.log('Events:', events);
+  //     const eventLists = await listGoogleEvent(month, year);
+  //     // Handle the fetched eventLists, e.g., update the UI
+  //     console.log('Events:', eventLists);
   //   } catch (error) {
-  //     console.error('Error fetching events:', error);
+  //     console.error('Error fetching eventLists:', error);
   //   }
   // };
 
@@ -321,42 +335,17 @@ const Calendar = () => {
     //       setEvents(fetchedEvents);
     //     }
     //   } catch (error) {
-    //     console.error('Error fetching events:', error);
+    //     console.error('Error fetching eventLists:', error);
     //   }
     // };
     // fetchEvents();
-    listGoogleEvent(selectedMonth, selectedYear)
-      .then(data => {
-        setEvents(data);
-      })
-      .catch(error => console.error('Error:', error));
-    console.log([events]);
+    // listGoogleEvent(selectedMonth, selectedYear)
+    //   .then(data => {
+    //     setEvents(data);
+    //   })
+    //   .catch(error => console.error('Error:', error));
+    // console.log([eventLists]);
   }, [selectedYear, selectedMonth]);
-
-  function transformEvents(events) {
-    let transformedData = {};
-
-    events.forEach(event => {
-      const {start, summary, description} = event;
-      const {dateTime, timeZone} = start;
-
-      const eventDate = new Date(dateTime).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-
-      transformedData[eventDate] = {
-        selected: true,
-        marked: true,
-        eventTitle: summary,
-        eventDescription: description,
-        selectedColor: `colors[${Math.floor(Math.random() * 5)}]`, // Replace with your actual color selection logic
-      };
-    });
-
-    return transformedData;
-  }
 
   return (
     <ScrollView style={styles.container}>
@@ -457,14 +446,10 @@ const Calendar = () => {
                   startFromMonday={true}
                   todayBackgroundColor="#aaaaaa"
                   selectedDayTextColor="#FFFFFF"
-                  // selectedDayColor={
-                  //   events[getDateString(selectedDate)] !== null
-                  //     ? events[getDateString(selectedDate)].selectedColor
-                  //     : selectedColor
-                  // }
+                 
                   selectedDayColor={selectedColor}
                   dayOfWeekStyles={{borderBottomColor: 'red'}}
-                  markedDates={events}
+                  markedDates={eventLists}
                   onDateChange={onDayPress}
                   onMonthChange={date => {
                     const year = date.getFullYear();
@@ -628,14 +613,14 @@ const Calendar = () => {
         )}
       </View>
       <View style={styles.section}>
-        <TouchableOpacity style={styles.button1}>
+        <TouchableOpacity style={styles.button1} onPress={addEvent} disabled={addingEvent}>
           <AntDesign
             name="plus"
             size={20}
             color={'#FFF'}
             style={{marginRight: 10}}></AntDesign>
-          <Text style={styles.buttonText} onPress={addEvent}>
-            Add Event
+          <Text style={styles.buttonText} >
+            {addingEvent ? 'Adding Event...' : 'Add Event'}
           </Text>
         </TouchableOpacity>
       </View>

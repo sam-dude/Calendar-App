@@ -1,5 +1,5 @@
 import {he} from 'date-fns/locale';
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+import { AuthContext } from '../context/AuthContext';
 
 const Dashboard = () => {
   const profileInfo = {
@@ -16,6 +17,8 @@ const Dashboard = () => {
     name: 'Emily Gibbs',
     email: 'emilygibbs@gmail.com',
   };
+
+  const {user, setUser, handleLogout} = useContext(AuthContext);
   return (
     <View style={styles.container}>
       <View style={styles.info}>
@@ -24,7 +27,7 @@ const Dashboard = () => {
             source={require('../assets/images/friends/Emily.png')}
             style={styles.profileImag}
           />
-          <Text style={styles.profileName}>{profileInfo.name}</Text>
+          <Text style={styles.profileName}>{user.username}</Text>
           <Text style={styles.profileEmail}>{profileInfo.email}</Text>
         </View>
       </View>
@@ -91,7 +94,7 @@ const Dashboard = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.logout}>
-        <TouchableOpacity style={styles.dropdownButton}>
+        <TouchableOpacity style={styles.dropdownButton} onPress={handleLogout}>
           <View style={styles.option}>
             <Image
               style={styles.optionIcon}

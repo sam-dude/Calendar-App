@@ -8,19 +8,25 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+import { Data } from '../utils/faker';
 
-const Contact = ({iconUrl, event, date, avatarUrl, backColor}) => {
+const Contact = ({iconUrl, event, date, avatarUrl, backColor="#2196f3"}) => {
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const options = { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  }
   return (
-    <View style={[styles.contact, {backgroundColor: backColor}]}>
+    <View style={{...styles.contact, borderRadius: 12, backgroundColor: backColor}}>
       <View style={styles.avatarLeft}>
-        <Image style={(styles.avatar, styles.mr)} source={iconUrl} />
+        <Image style={(styles.avatar, styles.mr)} source={require('../assets/images/event/event5.png')} />
         <View style={styles.avatarMd}>
           <Text style={styles.eventName}>{event}</Text>
-          <Text style={styles.date}>{date}</Text>
+          <Text style={styles.date}>{formatDate(date)}</Text>
         </View>
       </View>
       <View>
-        <Image style={styles.icon} source={avatarUrl} />
+        <Image style={styles.icon} source={Data[0].iconUrl} />
       </View>
     </View>
   );
