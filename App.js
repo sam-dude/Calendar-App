@@ -16,6 +16,7 @@ import Profile from './screens/Profile';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import { AuthContext, AuthProvider } from './context/AuthContext';
+import { CalendarContextProvider } from './context/CalendarContext';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -203,7 +204,9 @@ const InApp = () => {
 const AppWrapper = () => {
   return(
     <AuthProvider>
-      <InApp />
+      <CalendarContextProvider>
+        <InApp />
+      </CalendarContextProvider>
     </AuthProvider>
   )
 }
